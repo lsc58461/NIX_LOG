@@ -9,7 +9,7 @@ import os
 
 
 URL = 'https://kr.whatismymmr.com/api/v1/summoner?name='
-API_KEY = 'Y8rGqyWaq3FngTpz6tuLiuLWmuLgeFmPXBPJ7oAQeoRMPrz3Jh4nxUBLRKfFptvK'
+API_KEY = os.environ["MMR_API_Key"]
 def Rank(search='hide on bush'):
     try:
         Read_Json = requests.get(f"{URL}{search}&apiKey={API_KEY}").json()
