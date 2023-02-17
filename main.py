@@ -1,3 +1,4 @@
+import os
 import nextcord
 import requests
 import json
@@ -5,10 +6,10 @@ from nextcord.ext import commands
 from nextcord import Interaction, SlashOption
 from api import Rank, Normal, ARAM
 # 봇 토큰
-TOKEN = "ODEwMDc3MzMwNTYzMjY4NjY4.GfDwMD.1G7DURjZKZsxfWt_5rmNezsjN4ghpxLoc-gZ7M"
+TOKEN = os.environ["Token"]
 
 # Riot API 키
-API_KEY = "RGAPI-26e79374-832e-4716-a459-ec9d1149f23a"
+API_KEY = os.environ["Riot_API_Key"]
 
 intents = nextcord.Intents.all()
 intents.members = True
