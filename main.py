@@ -13,8 +13,8 @@ from nextcord.ext import commands
 from nextcord import SlashOption, ButtonStyle, Interaction
 from nextcord.ui import View, Button 
 from MMR_API import Rank, Normal, ARAM
-from itertools import combinations
-import itertools
+# from itertools import combinations
+# import itertools
 
 with open("KEY.json", "r") as f:
 	data = json.load(f)
@@ -275,109 +275,112 @@ async def search_rank(ctx, summoner_name: str = SlashOption(description='소환�
     puuid = data['puuid']
     icon_url = get_icon(summoner_id)
     rank_data = get_rank(summoner_id)
-
-    tier = rank_data.get('tier')
-    if tier is None:
-        tier = '언랭'
-        rank = ''
-        lp = ''
-        win = '언랭'
-        winper = ''
-        loss = ''
+    print(rank_data)
+    if rank_data == None:
+        await response_msg.edit('```css\n소환사의 전적이 없습니다.```')
     else:
-        tier_rank = rank_data.get('rank')
-        if tier == 'MASTER':
-            tier_rank = ''
-        elif tier == 'GRANDMASTER':
-            tier_rank = ''
-        elif tier == 'CHALLENGER':
-            tier_rank = ''
-        rank = tier_rank
-        lp = f'({rank_data.get("lp")}LP)'
-        winper = f'({rank_data.get("win")/(rank_data.get("win")+rank_data.get("loss"))*100:.2f}%)'
-        win = f'{rank_data.get("win")}승'
-        loss = f'{rank_data.get("loss")}패'
+      tier = rank_data.get('tier')
+      if tier is None:
+          tier = '언랭'
+          rank = ''
+          lp = ''
+          win = '언랭'
+          winper = ''
+          loss = ''
+      else:
+          tier_rank = rank_data.get('rank')
+          if tier == 'MASTER':
+              tier_rank = ''
+          elif tier == 'GRANDMASTER':
+              tier_rank = ''
+          elif tier == 'CHALLENGER':
+              tier_rank = ''
+          rank = tier_rank
+          lp = f'({rank_data.get("lp")}LP)'
+          winper = f'({rank_data.get("win")/(rank_data.get("win")+rank_data.get("loss"))*100:.2f}%)'
+          win = f'{rank_data.get("win")}승'
+          loss = f'{rank_data.get("loss")}패'
 
-    #MMR API 멀티스레딩
-    with concurrent.futures.ThreadPoolExecutor() as executor:
-        futures = [executor.submit(Rank, summoner_name),
-                executor.submit(Normal, summoner_name),
-                executor.submit(ARAM, summoner_name)]
-        _Rank, _Normal, _ARAM = [f.result() for f in futures]
-    
-    # Create and send embed message for first page
-    re_name = summoner_name.strip().replace(' ', '%20')
-    opggurl= f'https://www.op.gg/summoners/kr/{re_name}/'
-    embed1 = nextcord.Embed(title=summoner_name, color=nextcord.Color.blue(), url=opggurl)
-    embed1.set_thumbnail(url=icon_url)
-    embed1.add_field(name='랭크', value=f'```css\n{tier} {rank}{lp}\n```')
-    embed1.add_field(name='승률', value=f'```css\n{win} {loss}{winper}\n```')
-    embed1.add_field(name='솔로랭크', value = '```css\n{}\n```'.format(_Rank[0]), inline = False)
-    embed1.add_field(name='노말', value = '```css\n{}\n```'.format(_Normal[0]), inline = False)
-    embed1.add_field(name='무작위 총력전', value = '```css\n{}\n```'.format(_ARAM[0]), inline = False)
-    embed1.set_footer(text='Page 1/2          #버튼 상호작용 실패시 전적 재검색')
+      #MMR API 멀티스레딩
+      with concurrent.futures.ThreadPoolExecutor() as executor:
+          futures = [executor.submit(Rank, summoner_name),
+                  executor.submit(Normal, summoner_name),
+                  executor.submit(ARAM, summoner_name)]
+          _Rank, _Normal, _ARAM = [f.result() for f in futures]
+      
+      # Create and send embed message for first page
+      re_name = summoner_name.strip().replace(' ', '%20')
+      opggurl= f'https://www.op.gg/summoners/kr/{re_name}/'
+      embed1 = nextcord.Embed(title=summoner_name, color=nextcord.Color.blue(), url=opggurl)
+      embed1.set_thumbnail(url=icon_url)
+      embed1.add_field(name='랭크', value=f'```css\n{tier} {rank}{lp}\n```')
+      embed1.add_field(name='승률', value=f'```css\n{win} {loss}{winper}\n```')
+      embed1.add_field(name='솔로랭크', value = '```css\n{}\n```'.format(_Rank[0]), inline = False)
+      embed1.add_field(name='노말', value = '```css\n{}\n```'.format(_Normal[0]), inline = False)
+      embed1.add_field(name='무작위 총력전', value = '```css\n{}\n```'.format(_ARAM[0]), inline = False)
+      embed1.set_footer(text='Page 1/2          #버튼 상호작용 실패시 전적 재검색')
 
-    recent_matches = get_recent_matches(puuid, 'asia')
-    if recent_matches:
-        
-        embed2 = nextcord.Embed(title='최근 전적', color=nextcord.Color.blue())
-        embed2.set_thumbnail(url=icon_url)
-        embed2.add_field(name='게임모드', value=''.join(recent_matches['gamemode']), inline=True)
-        embed2.add_field(name='챔피언', value=''.join(recent_matches['champion_name']), inline=True)
-        embed2.add_field(name='KDA', value=''.join(recent_matches['kda']), inline=True)
-        embed2.set_footer(text='Page 2/2          #버튼 상호작용 실패시 전적 재검색')
-    else:
-        embed2 = nextcord.Embed(title='최근 전적', description='최근 전적이 없습니다.', color=nextcord.Color.blue())
-        embed2.set_thumbnail(url=icon_url)
-        embed2.set_footer(text='Page 2/2          #버튼 상호작용 실패시 전적 재검색')
+      recent_matches = get_recent_matches(puuid, 'asia')
+      if recent_matches:
+          
+          embed2 = nextcord.Embed(title='최근 전적', color=nextcord.Color.blue())
+          embed2.set_thumbnail(url=icon_url)
+          embed2.add_field(name='게임모드', value=''.join(recent_matches['gamemode']), inline=True)
+          embed2.add_field(name='챔피언', value=''.join(recent_matches['champion_name']), inline=True)
+          embed2.add_field(name='KDA', value=''.join(recent_matches['kda']), inline=True)
+          embed2.set_footer(text='Page 2/2          #버튼 상호작용 실패시 전적 재검색')
+      else:
+          embed2 = nextcord.Embed(title='최근 전적', description='최근 전적이 없습니다.', color=nextcord.Color.blue())
+          embed2.set_thumbnail(url=icon_url)
+          embed2.set_footer(text='Page 2/2          #버튼 상호작용 실패시 전적 재검색')
 
-    # Create pagination
-    pages = [embed1, embed2]
-    current_page = 0
+      # Create pagination
+      pages = [embed1, embed2]
+      current_page = 0
 
-    async def previous_callback(interaction):
-        logger.info(f'previous_callback : {interaction.user}\n')
-        nonlocal current_page
-        current_page = max(0, current_page - 1)
-        if current_page == 0:
-            button_previous.disabled = True
-            button_previous.style = ButtonStyle.gray
-            
-        button_next.disabled = False
-        button_next.style = ButtonStyle.primary
-        
-        await sent_msg.edit(embed=pages[current_page], view=myview)
+      async def previous_callback(interaction):
+          logger.info(f'previous_callback : {interaction.user}\n')
+          nonlocal current_page
+          current_page = max(0, current_page - 1)
+          if current_page == 0:
+              button_previous.disabled = True
+              button_previous.style = ButtonStyle.gray
+              
+          button_next.disabled = False
+          button_next.style = ButtonStyle.primary
+          
+          await sent_msg.edit(embed=pages[current_page], view=myview)
 
-    async def next_callback(interaction):
-        logger.info(f'next_callback : {interaction.user}\n')
-        nonlocal current_page
-        current_page = min(len(pages) - 1, current_page + 1)
-        if current_page == len(pages) - 1:
-            button_next.disabled = True
-            button_next.style = ButtonStyle.gray
-            
-        button_previous.disabled = False
-        button_previous.style = ButtonStyle.primary
-        
-        await sent_msg.edit(embed=pages[current_page], view=myview)
-        
-    # Define button
-    button_previous = Button(label='◀️', style=ButtonStyle.gray, disabled=True)
-    button_next = Button(label='▶️', style=ButtonStyle.primary)
-    
-    #Button CallBack
-    button_previous.callback = previous_callback
-    button_next.callback = next_callback
-    
-    myview = View(timeout=300)
-    myview.add_item(button_previous)
-    myview.add_item(button_next)
+      async def next_callback(interaction):
+          logger.info(f'next_callback : {interaction.user}\n')
+          nonlocal current_page
+          current_page = min(len(pages) - 1, current_page + 1)
+          if current_page == len(pages) - 1:
+              button_next.disabled = True
+              button_next.style = ButtonStyle.gray
+              
+          button_previous.disabled = False
+          button_previous.style = ButtonStyle.primary
+          
+          await sent_msg.edit(embed=pages[current_page], view=myview)
+          
+      # Define button
+      button_previous = Button(label='◀️', style=ButtonStyle.gray, disabled=True)
+      button_next = Button(label='▶️', style=ButtonStyle.primary)
+      
+      #Button CallBack
+      button_previous.callback = previous_callback
+      button_next.callback = next_callback
+      
+      myview = View(timeout=300)
+      myview.add_item(button_previous)
+      myview.add_item(button_next)
 
-    # Send initial message
-    sent_msg = await ctx.send(embed=embed1, view=myview)
+      # Send initial message
+      sent_msg = await ctx.send(embed=embed1, view=myview)
 
-    # Edit response message with search time
-    await response_msg.edit(f'```css\n검색이 완료 되었습니다.\n{time.time() - start}초```')
+      # Edit response message with search time
+      await response_msg.edit(f'```css\n검색이 완료 되었습니다.\n{time.time() - start}초```')
 
 
 
@@ -664,36 +667,68 @@ async def save_game_path(ctx):
     
     # 응답 메시지를 보냅니다
     await ctx.send('```css\n아래 링크에서 파일을 다운받고 압축을 풀고 main.exe를 실행 후 검색을 누르고 기다리면 롤의 경로가 검색됩니다.\n검색된 경로를 클릭하면 복사됩니다.\n그 후 디스코드에서 /path 에 복사된 경로를 붙여 넣습니다.```')
-    await ctx.send('http://dbserver.dothome.co.kr/%EA%B2%BD%EB%A1%9C%20%EA%B2%80%EC%83%89.zip')
+    await ctx.send('http://dbserver.dothome.co.kr/%EA%B2%BD%EB%A1%9C_%EA%B2%80%EC%83%89.zip')
     return
 
+# 구현 중
 # balance 함수 정의
+# 소환사 랭크 정보 조회 함수를 구현합니다
 async def balance(summoner_names):
     summoner_tiers = {}
-
+    print(summoner_names)
     # 소환사 이름을 순회하며 티어 정보 조회
     async with aiohttp.ClientSession() as session:
         for name in summoner_names:
+            print(name)
             summoner_url = f'https://kr.api.riotgames.com/lol/summoner/v4/summoners/by-name/{name}'
+            print(summoner_url)
             async with session.get(summoner_url, headers=request_header) as response:
                 if response.status != 200:
+                    print(response.status)
                     return f'소환사 {name}을(를) 찾을 수 없습니다.'
 
-                data = await response.json()
-                summoner_id = data['id']
+                try:
+                    data = await response.json()
+                    summoner_id = data['id']
 
-                # 소환사 ID로 티어 정보 조회
-                rank_data = await get_rank(summoner_id)
-                if rank_data:
-                    tier = rank_data['tier']
-                    summoner_tiers[name] = tier
-                else:
-                    summoner_tiers[name] = '언랭'
+                    # 소환사 ID로 티어 정보 조회
+                    rank_data = get_rank(summoner_id)
+                    if rank_data:
+                        tier = rank_data['tier']
+                        summoner_tiers[name] = tier
+                    else:
+                        summoner_tiers[name] = '언랭'
+                except Exception as e:
+                    return f'소환사 {name}의 정보를 가져오는 중에 오류가 발생했습니다.\n{e}'
 
     # 티어를 기준으로 소환사들을 밸런스 맞춰 팀을 구성
+     # 티어를 기준으로 소환사들을 밸런스 맞춰 팀을 구성
     summoners_sorted = sorted(summoner_tiers, key=lambda x: summoner_tiers[x])
-    team1 = summoners_sorted[:5]
-    team2 = summoners_sorted[5:]
+
+    # 팀을 두 개로 분할
+    team1, team2 = [], []
+    for index, name in enumerate(summoners_sorted):
+        if index % 2 == 0:
+            team1.append(name)
+        else:
+            team2.append(name)
+
+    # 팀의 티어 평균 계산
+    def calculate_team_tier_average(team):
+        return sum(map(lambda x: summoner_tiers[x], team)) / len(team)
+
+    # 팀의 티어 불균형 최소화를 위해 팀을 재조정
+    while abs(calculate_team_tier_average(team1) - calculate_team_tier_average(team2)) > 1:
+        if calculate_team_tier_average(team1) > calculate_team_tier_average(team2):
+            # 팀 1에서 가장 높은 티어를 팀 2로 이동
+            team1_tiers = [summoner_tiers[name] for name in team1]
+            max_tier_index = team1_tiers.index(max(team1_tiers))
+            team2.append(team1.pop(max_tier_index))
+        else:
+            # 팀 2에서 가장 높은 티어를 팀 1로 이동
+            team2_tiers = [summoner_tiers[name] for name in team2]
+            max_tier_index = team2_tiers.index(max(team2_tiers))
+            team1.append(team2.pop(max_tier_index))
 
     # Embed 생성
     embed = nextcord.Embed(title="팀 밸런스", color=0x00ff00)
@@ -702,14 +737,14 @@ async def balance(summoner_names):
 
     return embed
 
-
+# 구현 중
 # balance 커맨드 정의
 @client.slash_command(name='balance', description='소환사들의 팀 밸런스를 계산합니다.')
 async def balance_teams(ctx, summoner1: str, summoner2: str, summoner3: str, summoner4: str, summoner5: str,
                        summoner6: str, summoner7: str, summoner8: str, summoner9: str, summoner10: str):
     summoner_names = [summoner1, summoner2, summoner3, summoner4, summoner5, summoner6, summoner7, summoner8,
                       summoner9, summoner10]
-
+    response_msg = await ctx.send('```css\n잠시만 기다려주세요.```')
     result = await balance(summoner_names)
     if isinstance(result, str):
         await ctx.send(result)
